@@ -4,19 +4,35 @@
 #include <iostream>
 #include <sstream>
 #include <bits/stdc++.h>
+#include <boost/iterator/counting_iterator.hpp>
 
-#define ONLINE_JUDGE
+//#define ONLINE_JUDGE
 #ifndef ONLINE_JUDGE    
 #include <gmock/gmock.h>
 #endif
 
-using Stack = std::stack<int>;
-using Queue = std::queue<int>;
-
-std::string is_track_B_reasonable(Queue &track_B, Queue &track_A, int count)
+class Train
 {
-    Stack station_S;
+public:
+    Train (int count, std::stringstream &seqnum) : count_(count)
+    {
+        init_track_A();
+        init_track_B(seqnum);
+    };
+    bool is_track_B_reasonable();
 
+private:
+    void init_track_A();
+    void init_track_B(std::stringstream &seqnum);
+private:
+    int count_;
+    std::queue<int> track_A;
+    std::queue<int> track_B;
+    std::stack<int> station_S;
+};
+
+bool Train::is_track_B_reasonable()
+{
     while (!track_B.empty())
     {
         int tB = track_B.front();
@@ -37,7 +53,7 @@ std::string is_track_B_reasonable(Queue &track_B, Queue &track_A, int count)
         }
         else if (track_A.empty())
         {
-            return "No";
+            return false;
         }            
         else
         {
@@ -45,12 +61,12 @@ std::string is_track_B_reasonable(Queue &track_B, Queue &track_A, int count)
             station_S.push(tA);
         }
     }
-    return "Yes";
+    return true;
 }
 
-void read_track_B(int count, std::stringstream &seqnum, Queue &track_B)
+void Train::init_track_B(std::stringstream &seqnum)
 {
-    for(int i=0; i<count; i++)
+    for(int i=0; i<count_; i++)
     {
         int number;
         seqnum >> number;
@@ -58,47 +74,51 @@ void read_track_B(int count, std::stringstream &seqnum, Queue &track_B)
     }
 }
 
-void init_track_A(int count, Queue &track_A)
+void Train::init_track_A()
 {
-        for (int i=1; i<=count; i++)
-            track_A.push(i);
+#if 1    
+    for (int i=1; i<=count_; i++)
+        track_A.push(i);
+#else /* or use boost */
+   std::queue<int> q(boost::counting_iterator<int>(1), boost::counting_iterator<int>(count_));
+   track_A = q;
+#endif
 }
 
 void resolve_uva(std::istream & is, std::ostream & os)
 {
-    Queue track_A;
-    Queue track_B;
-    std::string answer;
     std::string line;
-    int count = -1;
+    int last_num = -1;
     int first_num;
     
     while (getline(is, line))
     {
         std::stringstream seqnum(line);
+        /* is there a space ?
+          No: means only one number. It is a Track_A's init number
+          Yes: they are the Track_B's test data */
         size_t n = std::count(line.begin(), line.end(), ' ');
 
-        if (n == 0) /* no space means only one number */
+        if (n == 0) /* no space means Track_A's init number */
         {
             seqnum >> first_num;
-            if ((count == 0) & (first_num == 0)) /* the continue second count is zero */
-                break;
+
+            /* is the continuous num zero ? */
+            if ((last_num == 0) & (first_num == 0)) 
+                return; // end the test
             else    
             {
-                count = first_num;
-                if (count == 0) 
+                last_num = first_num;
+                if (first_num == 0)
                     os << std::endl;
 
                 continue;
             }                
         }
 
-        init_track_A(count, track_A);
-        read_track_B(count, seqnum, track_B);
-        answer = is_track_B_reasonable(track_B, track_A, count);
-        track_A = Queue();
-        track_B = Queue();
-        os << answer << std::endl;
+        Train train(first_num, seqnum);
+        bool answer = train.is_track_B_reasonable();
+        os << ((answer == true) ? "Yes" : "No") << std::endl;
     }        
 }
 
