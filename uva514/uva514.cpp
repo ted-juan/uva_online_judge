@@ -6,7 +6,7 @@
 #include <bits/stdc++.h>
 #include <boost/iterator/counting_iterator.hpp>
 
-//#define ONLINE_JUDGE
+#define ONLINE_JUDGE
 #ifndef ONLINE_JUDGE    
 #include <gmock/gmock.h>
 #endif
@@ -39,22 +39,26 @@ bool Train::is_track_B_reasonable()
         int tA = track_A.empty() ? 0 : track_A.front();
         int tS = station_S.empty() ? 0 : station_S.top();
 
+        /* from track_A to track_B */
         if (tB == tA)
         {
             track_A.pop();
             track_B.pop();
             continue;
         }      
+        /* from station_S to track_B */
         else if (tB == tS)
         {
             station_S.pop();
             track_B.pop();
             continue;
         }
+        /* no train */
         else if (track_A.empty())
         {
             return false;
         }            
+        /* from track_A to station_S */
         else
         {
             track_A.pop();
@@ -97,9 +101,9 @@ void resolve_uva(std::istream & is, std::ostream & os)
         /* is there a space ?
           No: means only one number. It is a Track_A's init number
           Yes: they are the Track_B's test data */
-        size_t n = std::count(line.begin(), line.end(), ' ');
+        size_t space_count = std::count(line.begin(), line.end(), ' ');
 
-        if (n == 0) /* no space means Track_A's init number */
+        if (space_count == 0) /* no space means Track_A's init number */
         {
             seqnum >> first_num;
 
