@@ -6,7 +6,7 @@
 #include <sstream>
 #include <iomanip>
 
-//#define ONLINE_JUDGE
+#define ONLINE_JUDGE
 #ifndef ONLINE_JUDGE
 #include <gmock/gmock.h>
 #endif
@@ -32,7 +32,25 @@ class Poker
 			os << card.value_ << card.suit_;
 			return os;
 		}
-	public:
+		bool is_the_continous_two_cards(Poker &next_card)
+		{
+			/* ex: 2,3,4,5,6 or 2,3,4,5,14(A) */
+			if (((this->value_ + 1) == next_card.value_) ||
+					(this->value_ + 9 == 14))
+					return true;
+
+			return false;		
+		}				
+		void count_value_to_map (std::map<char, int> &occurrences_map) const
+		{
+			occurrences_map[this->value_]++;
+		}
+		void count_suit_to_map (std::map<char, int> &occurrences_map) const
+		{
+			occurrences_map[this->suit_]++;
+		}
+		void transfer_face_value_to_number();
+	private:
 		char value_;
 		char suit_;
 };
@@ -48,7 +66,7 @@ struct poker_table_t
 std::map<std::string, struct poker_table_t> poker_table
 {
 	/* key     result     priority*/
-	/* key = {most_num, second_num, is_continuos, is_same_suit} */
+	/* key = {most_count, second_most_count, is_continuos, is_same_suit} */
 	{"11YY", {"straight-flush", 0}},
 	{"41NN", {"four-of-a-kind", 1}},
 	{"32NN", {"full-house"    , 2}},
@@ -60,30 +78,26 @@ std::map<std::string, struct poker_table_t> poker_table
 	{"11NN", {"highest-card"  , 8}}
 };
 
-void transfer_face_value_to_number(Poker_cards &cards)
+void Poker::transfer_face_value_to_number()
 {
 	std::map<char, char> face_value_table =
 	{{'A', 14}, {'T', 10}, {'J', 11}, {'Q', 12}, {'K', 13}};
 
-	for (auto &it : cards)
-	{
-		if (face_value_table.count(it.value_))
-			it.value_ = face_value_table[it.value_];
-		else
-			it.value_ -= '0';
-	}
+	if (face_value_table.count(this->value_))
+		this->value_ = face_value_table[this->value_];
+	else
+		this->value_ -= '0';
 }
 
-std::string is_the_continous_num(const Poker_cards &compose)
+std::string is_the_continous_five_cards(const Poker_cards &compose)
 {
 	Poker_cards cards(compose);
 
-	transfer_face_value_to_number(cards);
-	std::sort(cards.begin(), cards.end(),
-			[] (auto & lt, auto & rt)
-			{
-			return (lt.value_ < rt.value_);
-			});
+	for (auto &it : cards)
+	{
+		it.transfer_face_value_to_number();
+	}		
+	std::sort(cards.begin(), cards.end());
 
 	auto it = cards.begin();
 	size_t count = 0;
@@ -91,37 +105,32 @@ std::string is_the_continous_num(const Poker_cards &compose)
 
 	for(size_t i=0; i<len; i++)
 	{
-		/* ex: 2,3,4,5,6 or 2,3,4,5,14(A) */
-		if (((it[i].value_ + 1) == it[i+1].value_) ||
-				(it[i].value_ + 9 == 14))
-		{
+		if (it[i].is_the_continous_two_cards(it[i+1]))
 			count++;
-			continue;
-		}
 		else
 			count=0;
 	}
 	return (count >= len) ? "Y" : "N";
 }
 
-std::string the_first_two_max_same_num(const Poker_cards &cards)
+std::string count_the_same_num_and_choose_two(const Poker_cards &cards)
 {
 	std::map<char, int> occurrences_map;
-	std::vector <std::pair<char, int>> occurrences;
-	for (const auto &it : cards)
+	std::vector <std::pair<char, int>> occurrences_vector;
+	for (auto &it : cards)
 	{
-		occurrences_map[it.value_]++;
+		it.count_value_to_map(occurrences_map);
 	}
 	std::copy(occurrences_map.begin(), occurrences_map.end(),
-			std::back_inserter<std::vector<std::pair<char, int>>>(occurrences));
+			std::back_inserter<std::vector<std::pair<char, int>>>(occurrences_vector));
 
-	std::sort(occurrences.begin(), occurrences.end(),
+	std::sort(occurrences_vector.begin(), occurrences_vector.end(),
 			[] (auto & lt, auto & rt)
 			{
-			return (lt.second > rt.second);
+				return (lt.second > rt.second);
 			});
-	std::string s = std::to_string(occurrences[0].second) +
-		std::to_string(occurrences[1].second);
+	std::string s = std::to_string(occurrences_vector[0].second) +
+		std::to_string(occurrences_vector[1].second);
 	return s;
 }
 
@@ -132,12 +141,12 @@ std::string is_the_same_suit(const Poker_cards &cards)
 	std::vector <std::pair<char, int>> occurrences;
 	for (const auto &it : cards)
 	{
-		occurrences_map[it.suit_]++;
+		it.count_suit_to_map(occurrences_map);
 	}
 	std::copy(occurrences_map.begin(), occurrences_map.end(),
 			std::back_inserter<std::vector<std::pair<char, int>>>(occurrences));
 
-	/* if yes, means only one kine of suit */
+	/* if yes, means only one kind of suit */
 	return (occurrences[0].second == len) ? "Y" : "N";
 }
 
@@ -148,15 +157,20 @@ std::string compose_the_best_cards(Poker_cards hand, Poker_cards deck)
 	uint32_t the_highest_priority = 8;
 	std::string the_best_combination = "11NN";
 
+	/* Fixed 1 deck + choose 4 hand from next_permutation(5 hand)
+	   Fixed 2 deck + choose 3 hand from next_permutation(5 hand) 
+	   .....
+	*/
 	for (size_t i=0 ;i<=len; i++)
 	{
-		auto last = std::copy(deck.begin(), deck.begin()+i, compose.begin());
+		auto compose_end_pos = std::copy(deck.begin(), deck.begin()+i, compose.begin());
 		std::sort(hand.begin(), hand.end());
 		do
 		{
-			std::copy(hand.begin(), hand.begin()+(5-i), last);
-			std::string key = the_first_two_max_same_num(compose) +
-				is_the_continous_num(compose) +
+			/* FIXME: next_permutation() cause duplicated hand permutation*/
+			std::copy(hand.begin(), hand.begin()+(5-i), compose_end_pos);
+			std::string key = count_the_same_num_and_choose_two(compose) +
+				is_the_continous_five_cards(compose) +
 				is_the_same_suit(compose);
 
 			if (poker_table[key].priority < the_highest_priority)
