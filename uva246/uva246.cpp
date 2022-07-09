@@ -16,10 +16,10 @@ using pile_deques = std::vector<std::deque<int>>;
 class poker_game
 {
 public:
-	poker_game(std::istream & is, int first)
+	poker_game(std::istream & is, int first_card)
 	{
-		init_deck(is, first);
-    };	
+		init_deck(is, first_card);
+	};	
 
 	void deal_cards_to_each_pile();
 	void deal_one_card();
@@ -27,81 +27,80 @@ public:
 	void record_pile_state();
 	bool is_game_over(std::ostream & os);
 private:
-	void init_deck(std::istream & is, int first);
+	void init_deck(std::istream & is, int first_card);
 	bool is_deck_empty();
 	bool is_pile_empty();
 	bool is_draw_condition();
-	void pick_front_card(std::deque<int> &pile, int card)
+	void pick_front_card(std::deque<int> &current_pile, int card)
 	{
-		deck.push_back(card);
-		pile.pop_front(); 
+		deck_.push_back(card);
+		current_pile.pop_front(); 
 	}
-	void pick_back_card(std::deque<int> &pile, int card)
+	void pick_back_card(std::deque<int> &current_pile, int card)
 	{
-		deck.push_back(card);
-		pile.pop_back(); 
+		deck_.push_back(card);
+		current_pile.pop_back(); 
 	}
 	void dealt_from_the_deck(int pile_index)
 	{
-		piles[pile_index].push_back(deck.front());
-		deck.pop_front();
+		piles_[pile_index].push_back(deck_.front());
+		deck_.pop_front();
 	}			
 	void increase_pile_index()
 	{
-		current_pile_index = (current_pile_index + 1) % max_piles;
+		current_pile_index_ = (current_pile_index_ + 1) % max_piles_;
 	}
-	int get_current_pile_index()
+	int get_current_pile_index_()
 	{
-		return current_pile_index;	
+		return current_pile_index_;	
 	}
 private:
-	const int max_piles = 7;
-	int number_of_dealt_card = 0;
-	int current_pile_index = 0;
-	std::deque<int> current_pile;
-	pile_deques piles;
-	std::deque<int> deck;
-	std::set<pile_deques> snapshot_record;
+	const int max_piles_ = 7;
+	int number_of_dealt_card_ = 0;
+	int current_pile_index_ = 0;
+	pile_deques piles_;
+	std::deque<int> deck_;
+	std::set<pile_deques> snapshot_record_;
 };
 
-void poker_game::init_deck(std::istream & is, int first)
+void poker_game::init_deck(std::istream & is, int first_card)
 {
-	int number;
+	int card;
 
-	deck.push_back(first);
+	deck_.push_back(first_card);
 	for (int i=0; i<51; i++)
 	{
-		is >> number;
-		deck.push_back(number);
+		is >> card;
+		deck_.push_back(card);
 	}
 }	
 
 void poker_game::deal_cards_to_each_pile()
 {
-	for (int i=0; i<max_piles; i++)
+	for (int i=0; i<max_piles_; i++)
 	{
 		std::deque<int> new_pile;
-		new_pile.push_back(deck.front());
-		deck.pop_front();
-		piles.push_back(new_pile);
+		new_pile.push_back(deck_.front());
+		deck_.pop_front();
+		piles_.push_back(new_pile);
 	}
 
-	for (int i=0; i<max_piles; i++)
+	for (int i=0; i<max_piles_; i++)
 		dealt_from_the_deck(i);
 
-	number_of_dealt_card = max_piles*2;
+	number_of_dealt_card_ = max_piles_*2;
 	record_pile_state();
 }
 
 void poker_game::deal_one_card()
 {
-	for (int i=0; i<max_piles; i++)
+	for (int i=0; i<max_piles_; i++)
 	{
-		int index = get_current_pile_index();
-		if (!(piles[index].empty()))
+		int index = get_current_pile_index_();
+		if (!(piles_[index].empty()))
 		{
 			dealt_from_the_deck(index);
-			number_of_dealt_card++;
+			number_of_dealt_card_++;
 			break;
 		}			
 		increase_pile_index();
@@ -110,8 +109,8 @@ void poker_game::deal_one_card()
 
 void poker_game::pick_10_20_30()
 {
-	int index = get_current_pile_index();
-	std::deque<int> &pile = piles[index];
+	int index = get_current_pile_index_();
+	std::deque<int> &pile = piles_[index];
 
 	while(1)
 	{
@@ -154,17 +153,17 @@ void poker_game::pick_10_20_30()
 
 void poker_game::record_pile_state()
 {
-	pile_deques piles_state = piles;
-	piles_state.push_back(deck);
-	snapshot_record.insert(piles_state);
+	pile_deques piles_state = piles_;
+	piles_state.push_back(deck_);
+	snapshot_record_.insert(piles_state);
 }
 
 bool poker_game::is_draw_condition()
 {
-	pile_deques piles_state = piles;
-	piles_state.push_back(deck);
+	pile_deques piles_state = piles_;
+	piles_state.push_back(deck_);
 
-	if (snapshot_record.find(piles_state) != snapshot_record.end())
+	if (snapshot_record_.find(piles_state) != snapshot_record_.end())
 		return true;
 
 	return false;
@@ -172,14 +171,14 @@ bool poker_game::is_draw_condition()
 
 bool poker_game::is_deck_empty()
 {
-	return deck.empty();
+	return deck_.empty();
 }
 
 bool poker_game::is_pile_empty()
 {
-	for (int i=0; i<max_piles; i++)
+	for (int i=0; i<max_piles_; i++)
 	{
-		if (!(piles[i].empty()))
+		if (!(piles_[i].empty()))
 			return false;
 	}		
 	return true;
@@ -188,11 +187,11 @@ bool poker_game::is_pile_empty()
 bool poker_game::is_game_over(std::ostream & os)
 {
 	if (is_draw_condition() == true)
-		os << "Draw: " << number_of_dealt_card << std::endl;
+		os << "Draw: " << number_of_dealt_card_ << std::endl;
 	else if (is_deck_empty() == true)
-		os << "Loss: " << number_of_dealt_card << std::endl;
+		os << "Loss: " << number_of_dealt_card_ << std::endl;
 	else if (is_pile_empty() == true)		
-		os << "Win : " << number_of_dealt_card << std::endl;
+		os << "Win : " << number_of_dealt_card_ << std::endl;
 	else	
 		return false;
 
@@ -201,17 +200,15 @@ bool poker_game::is_game_over(std::ostream & os)
 
 void resolve_uva(std::istream & is, std::ostream & os)
 {
-	std::string line;
-	int num;
-	std::stringstream seqnum;
-
 	while (1)
 	{
-		is >> num;
-		if (num == 0)
+		int first_card;
+
+		is >> first_card;
+		if (first_card == 0)
 			break;
 
-		poker_game poker(is, num);
+		poker_game poker(is, first_card);
 		poker.deal_cards_to_each_pile();
 
 		while (1)
