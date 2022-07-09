@@ -56,6 +56,7 @@ private:
 	}
 private:
 	const int max_piles_ = 7;
+	const int max_cards_ = 52;
 	int number_of_dealt_card_ = 0;
 	int current_pile_index_ = 0;
 	pile_deques piles_;
@@ -68,7 +69,7 @@ void poker_game::init_deck(std::istream & is, int first_card)
 	int card;
 
 	deck_.push_back(first_card);
-	for (int i=0; i<51; i++)
+	for (int i=0; i< (max_cards_ - 1); i++)
 	{
 		is >> card;
 		deck_.push_back(card);
