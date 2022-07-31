@@ -20,11 +20,7 @@ enum class direction_t
 
 struct position_t
 {
-    position_t()
-        : x(0)
-        , y(0)
-		, dir(direction_t::north)
-    {}
+	position_t() : x(0), y(0), dir(direction_t::north){}
 	int x;
 	int y;
 	direction_t dir;
@@ -42,7 +38,7 @@ public:
 	Maze_Traversal(std::istream & is)
 	{
 		init_maze(is);
-    };	
+	};	
 	position_t get_position();
 	bool cmd_handle(char cmd);
 	typedef void (Maze_Traversal::*cmd_func)(void);
@@ -83,7 +79,7 @@ void Maze_Traversal::init_maze(std::istream & is)
 bool Maze_Traversal::cmd_handle(char cmd)
 {
 	auto it = cmd_func_map.find(cmd);
-    if(it == cmd_func_map.end())
+	if(it == cmd_func_map.end())
 		return false;
 
 	(this->*cmd_func_map[cmd])();
@@ -128,7 +124,7 @@ position_t Maze_Traversal::get_position()
 
 void print_the_result(std::ostream & os, const position_t &position)
 {
-	std::map<direction_t, char> direction_table =
+	static std::map<direction_t, char> direction_table =
 		{{direction_t::east, 'E'},
 		 {direction_t::south, 'S'},
 		 {direction_t::west, 'W'},
