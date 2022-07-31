@@ -34,23 +34,23 @@ struct move_position_t
 
 class Maze_Traversal
 {
-public:
-	Maze_Traversal(std::istream & is)
-	{
-		init_maze(is);
-	};	
-	position_t get_position();
-	bool cmd_handle(char cmd);
-	typedef void (Maze_Traversal::*cmd_func)(void);
+	public:
+		Maze_Traversal(std::istream & is)
+		{
+			init_maze(is);
+		};
+		position_t get_position();
+		bool cmd_handle(char cmd);
+		typedef void (Maze_Traversal::*cmd_func)(void);
 
-private:
-	void init_maze(std::istream & is);
-	void move_forward();
-	void turn_right();
-	void turn_left();
-	std::vector<std::string> maze;
-	std::map<char, cmd_func> cmd_func_map;
-	position_t current_pos_;
+	private:
+		void init_maze(std::istream & is);
+		void move_forward();
+		void turn_right();
+		void turn_left();
+		std::vector<std::string> maze;
+		std::map<char, cmd_func> cmd_func_map;
+		position_t current_pos_;
 };
 
 void Maze_Traversal::init_maze(std::istream & is)
@@ -100,21 +100,21 @@ void Maze_Traversal::turn_left()
 void Maze_Traversal::move_forward()
 {
 	static std::map<direction_t, move_position_t> move_table =
-		{{direction_t::east, {1, 0}},
-		 {direction_t::south, {0, 1}},
-		 {direction_t::west, {-1, 0}},
-		 {direction_t::north, {0, -1}}};
+	{{direction_t::east, {1, 0}},
+		{direction_t::south, {0, 1}},
+		{direction_t::west, {-1, 0}},
+		{direction_t::north, {0, -1}}};
 
 	int next_x = current_pos_.x + move_table[current_pos_.dir].move_x;
 	int next_y = current_pos_.y + move_table[current_pos_.dir].move_y;
 
-    if (maze[next_y-1][next_x-1] == '*')
-        return;
-    else
-    {
+	if (maze[next_y-1][next_x-1] == '*')
+		return;
+	else
+	{
 		current_pos_.x = next_x;
 		current_pos_.y = next_y;
-    }	 
+	}
 }
 
 position_t Maze_Traversal::get_position()
@@ -125,18 +125,18 @@ position_t Maze_Traversal::get_position()
 void print_the_result(std::ostream & os, const position_t &position)
 {
 	static std::map<direction_t, char> direction_table =
-		{{direction_t::east, 'E'},
-		 {direction_t::south, 'S'},
-		 {direction_t::west, 'W'},
-		 {direction_t::north, 'N'}};
+	{{direction_t::east, 'E'},
+		{direction_t::south, 'S'},
+		{direction_t::west, 'W'},
+		{direction_t::north, 'N'}};
 
-	os << position.y << " " << position.x << " " 
+	os << position.y << " " << position.x << " "
 		<< direction_table[position.dir] << std::endl;
 }
 
 void resolve_uva(std::istream & is, std::ostream & os)
 {
-	int num; 
+	int num;
 
 	is >> num;
 
@@ -157,7 +157,7 @@ void resolve_uva(std::istream & is, std::ostream & os)
 			os << std::endl;
 
 		print_the_result(os, position);
-	}			
+	}
 }
 
 int main(int argc, char** argv)
